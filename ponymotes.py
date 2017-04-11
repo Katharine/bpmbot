@@ -87,7 +87,10 @@ def perform_search(text):
     for phrase in phrases:
         if phrase[0] == '+':
             has_includes = True
-            includes.update(search_tags(phrase[1:]))
+            if len(includes) == 0:
+                includes.update(search_tags(phrase[1:]))
+            else:
+                includes.intersection_update(search_tags(phrase[1:]))
         elif phrase[0] == '-':
             excludes.update(search_tags(phrase[1:]))
         elif phrase[:2] == 'r/':
