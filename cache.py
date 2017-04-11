@@ -32,8 +32,9 @@ def cache_sticker(emote):
         "https://api.telegram.org/bot{}/sendSticker".format(settings.TELEGRAM_TOKEN),
         headers={"Content-Type": "application/json"},
         json={
-            "chat_id": 93363441,
+            "chat_id": settings.STICKER_DUMP,
             "sticker": (settings.MY_URL + "/emote/{}@2x.webp").format(emote),
+            "disable_notification": True,
         }
     )
     if result.status_code != 200:
