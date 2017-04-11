@@ -4,6 +4,8 @@ import io
 import json
 import requests
 
+import cache
+
 from PIL import Image
 
 
@@ -130,23 +132,30 @@ def render_ponymote(name, flags, format='png', scale=1):
     url = emote['image_url']
     if url[:2] == '//':
         url = 'http:' + url
-    result = requests.get(url)
-    img = Image.open(io.BytesIO(result.content))
-    if 'size' in emote:
-        offset = [-x for x in emote.get('offset', (0, 0))]
-        img = img.crop((offset[0], offset[1], offset[0] + emote['size'][0], offset[1] + emote['size'][1]))
 
-    transform = emote.get('css', {}).get('transform', [])
-    if 'scaleX(-1)' in transform or 'r' in flags:
-        img = img.transpose(Image.FLIP_LEFT_RIGHT)
+    print("hi")
+    f = cache.get_spritesheet(url)
+    try:
+        img = Image.open(f)
 
-    if 'scaleY(-1)' in transform or 'f' in flags:
-        img = img.transpose(Image.FLIP_TOP_BOTTOM)
+        if 'size' in emote:
+            offset = [-x for x in emote.get('offset', (0, 0))]
+            img = img.crop((offset[0], offset[1], offset[0] + emote['size'][0], offset[1] + emote['size'][1]))
 
-    if scale != 1:
-        img = img.resize((int(img.size[0] * scale), int(img.size[1] * scale)), resample=Image.LANCZOS)
+        transform = emote.get('css', {}).get('transform', [])
+        if 'scaleX(-1)' in transform or 'r' in flags:
+            img = img.transpose(Image.FLIP_LEFT_RIGHT)
 
-    output = io.BytesIO()
-    img.save(output, format)
+        if 'scaleY(-1)' in transform or 'f' in flags:
+            img = img.transpose(Image.FLIP_TOP_BOTTOM)
+
+        if scale != 1:
+            img = img.resize((int(img.size[0] * scale), int(img.size[1] * scale)), resample=Image.LANCZOS)
+
+        output = io.BytesIO()
+        img.save(output, format)
+    finally:
+        f.close()
+
     output.seek(0)
     return output.read()

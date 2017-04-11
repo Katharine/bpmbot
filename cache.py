@@ -1,3 +1,7 @@
+import os
+import tempfile
+
+import gevent
 import redis
 import requests
 
@@ -40,3 +44,37 @@ def cache_sticker(emote):
     else:
         _cached[emote] = sticker_id
     return sticker_id
+
+
+if not os.path.exists(os.path.join(tempfile.gettempdir(), "bpm-spritesheets")):
+    os.mkdir(os.path.join(tempfile.gettempdir(), "bpm-spritesheets"))
+
+
+def _spritesheet_path(url):
+    return os.path.join(tempfile.gettempdir(), "bpm-spritesheets", os.path.basename(url))
+
+_pending_fetches = {}
+
+
+def _fetch(url):
+    print("fetching %s" % url)
+    result = requests.get(url)
+    with open(_spritesheet_path(url), 'bw') as f:
+        f.write(result.content)
+
+
+def get_spritesheet(url):
+    if url in _pending_fetches:
+        print("waiting for ongoing fetch")
+        _pending_fetches[url].join()
+
+    if os.path.exists(_spritesheet_path(url)):
+        print("using cached spritesheet")
+        return open(_spritesheet_path(url), 'rb')
+
+    print("fetching spritesheet")
+    _pending_fetches[url] = gevent.spawn(_fetch, url)
+    _pending_fetches[url].join()
+    del _pending_fetches[url]
+
+    return open(_spritesheet_path(url), 'rb')
