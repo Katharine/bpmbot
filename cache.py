@@ -20,7 +20,7 @@ def cache_sticker(emote):
     if _redis:
         cached_result = _redis.get(_redis_key(emote))
         if cached_result:
-            return str(cached_result)
+            return cached_result.decode("utf-8")
     else:
         if emote in _cached:
             return _cached[emote]
@@ -36,7 +36,7 @@ def cache_sticker(emote):
         return None
     sticker_id = result.json()["result"]["sticker"]["file_id"]
     if _redis:
-        _redis.set(_redis_key(emote), sticker_id)
+        _redis.set(_redis_key(emote), sticker_id.encode("utf-8"))
     else:
         _cached[emote] = sticker_id
     return sticker_id
