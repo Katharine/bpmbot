@@ -21,7 +21,7 @@ def handle_request(id, query):
         print(query)
         emotes, flags = ponymotes.perform_search(query)
         print(emotes, flags)
-        emotes = ['{}-{}'.format(x, '-'.join(sorted(flags))) for x in emotes][:10]
+        emotes = ['{}-{}'.format(x, '-'.join(sorted(flags))) for x in emotes][:settings.STICKER_LIMIT]
         # send a sticker
         group = gevent.pool.Group()
         greenlets = {}
