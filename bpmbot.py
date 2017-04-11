@@ -4,31 +4,13 @@ import gevent.pool
 from flask import Flask, request, make_response
 import requests
 
+import cache
 import ponymotes
 import settings
 
 app = Flask(__name__)
 
 ponymotes.fetch_ponymotes()
-
-
-_cached = {}
-def cache_sticker(emote):
-    if emote in _cached:
-        return _cached[emote]
-    result = requests.post(
-        "https://api.telegram.org/bot{}/sendSticker".format(settings.TELEGRAM_TOKEN),
-        headers={"Content-Type": "application/json"},
-        json={
-            "chat_id": 93363441,
-            "sticker": (settings.MY_URL + "/emote/{}@2x.webp").format(emote),
-        }
-    )
-    if result.status_code != 200:
-        return None
-    sticker_id = result.json()["result"]["sticker"]["file_id"]
-    _cached[emote] = sticker_id
-    return sticker_id
 
 
 def handle_request(id, query):
@@ -45,7 +27,7 @@ def handle_request(id, query):
         greenlets = {}
         for emote in emotes:
             g = group.spawn()
-            greenlets[emote] = group.spawn(cache_sticker, emote)
+            greenlets[emote] = group.spawn(cache.cache_sticker, emote)
         group.join()
         sticker_ids = {k: x.get() for k, x in greenlets.items()}
 
