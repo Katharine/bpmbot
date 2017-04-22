@@ -28,9 +28,9 @@ def fetch_ponymotes():
     for name, emote in data.items():
         name = name[1:]
         if 'primary' in emote:
-            _aliases[name] = emote['primary'][1:]
+            _aliases[name] = {'primary': emote['primary'][1:], 'css': emote.get('css', None)}
             continue
-        _aliases[name] = name
+        _aliases[name] = {'primary': name, 'css': emote.get('css', None)}
         _emotes[name] = emote
         for tag in emote['tags']:
             tag = tag[1:]
@@ -43,7 +43,7 @@ def search_names(text):
     results = set()
     for alias, emote in _aliases.items():
         if text in alias:
-            results.add(emote)
+            results.add(emote['primary'])
     return results
 
 
@@ -131,7 +131,8 @@ def render_ponymote(name, flags, format='png', scale=1):
         name = 'no'
         format = 'png'
 
-    emote = _emotes[_aliases[name]]
+    emote = _emotes[_aliases[name]['primary']]
+    css = _aliases[name]['css'] or {}
     url = emote['image_url']
     if url[:2] == '//':
         url = 'http:' + url
@@ -145,7 +146,7 @@ def render_ponymote(name, flags, format='png', scale=1):
             offset = [-x for x in emote.get('offset', (0, 0))]
             img = img.crop((offset[0], offset[1], offset[0] + emote['size'][0], offset[1] + emote['size'][1]))
 
-        transform = emote.get('css', {}).get('transform', [])
+        transform = css.get('transform', [])
         if 'scaleX(-1)' in transform or 'r' in flags:
             img = img.transpose(Image.FLIP_LEFT_RIGHT)
 
