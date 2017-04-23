@@ -2,6 +2,7 @@ from gevent import monkey; monkey.patch_all()
 import bz2
 import io
 import json
+import Levenshtein
 import requests
 
 import cache
@@ -11,9 +12,10 @@ from PIL import Image
 
 
 def _init():
-    global _emotes, _aliases, _tags, _subs
+    global _emotes, _aliases, _tags, _subs, _reverse_aliases
     _emotes = {}
     _aliases = {}
+    _reverse_aliases = {}
     _tags = {}
     _subs = {}
 
@@ -30,10 +32,12 @@ def fetch_ponymotes():
     for name, emote in data.items():
         name = name[1:]
         if 'primary' in emote:
+            _reverse_aliases.setdefault(emote['primary'][1:], []).append(name)
             _aliases[name] = {'primary': emote['primary'][1:], 'css': emote.get('css', None), 'name': name}
             continue
         emote['name'] = name
         _aliases[name] = {'primary': name, 'css': emote.get('css', None), 'name': name}
+        _reverse_aliases.setdefault(name, []).append(name)
         _emotes[name] = emote
         for tag in emote['tags']:
             tag = tag[1:]
@@ -87,6 +91,7 @@ def perform_search(text):
     if '+nonpony' not in phrases:
         excludes.update(search_tags('nonpony'))
 
+    name_queries = []
     for phrase in phrases:
         if phrase[0] == '+':
             has_includes = True
@@ -105,6 +110,7 @@ def perform_search(text):
         else:
             has_names = True
             parts = phrase.split('-')
+            name_queries.append(parts[0])
             names.update(search_names(parts[0]))
             flags.extend(parts[1:])
 
@@ -118,11 +124,11 @@ def perform_search(text):
     else:
         result = set(_emotes.keys()) - excludes
 
-    if has_names:
-        return [emote_by_name(x) for x in result & names], flags
-    else:
-        return [emote_by_name(x) for x in result], flags
+    emotes = [emote_by_name(x) for x in (result & names if has_names else result)]
+    if len(name_queries) == 1:
+        emotes.sort(key=lambda x: (min(Levenshtein.distance(y, name_queries[0]) for y in _reverse_aliases[x['name']]), x['name']))
 
+    return emotes, flags
 
 def get_size(ponymote):
     return _emotes[ponymote].get('size', (0, 0))
