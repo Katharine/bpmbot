@@ -49,7 +49,7 @@ for i, emote in enumerate(todo.keys()):
 
 print("Finished fetching originals.")
 
-while max(todo.values()) > 0:
+while len(todo) > 0:
     print("----------")
     print("BEGIN ITERATION {}".format(iteration))
     print("{} emotes this round.".format(len(todo)))
