@@ -14,7 +14,11 @@ total = len(q)
 
 def consumer():
     for emote in q:
-        print("{}/{} remain".format(len(q), total), emote['name'], cache.cache_sticker(emote, []))
+        try:
+            print("{}/{} remain".format(len(q), total), emote['name'], cache.cache_sticker(emote, []))
+        except Exception as e:
+            print(e)
+            print(emote.get('size'))
 
 group = gevent.pool.Group()
 for x in range(2):
