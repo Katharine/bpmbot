@@ -17,12 +17,13 @@ _cached = {}
 
 
 def _redis_key(emote):
-    return "sid:{}".format(emote)
+    return "m:{}".format(emote if isinstance(emote, str) else emote['name'])
 
 
-def cache_sticker(emote):
+def cache_sticker(emote, flags):
+    flag_str = '-'.join(sorted(flags))
     if _redis:
-        cached_result = _redis.get(_redis_key(emote))
+        cached_result = _redis.hget(_redis_key(emote), "s-%s" % flag_str)
         if cached_result:
             return cached_result.decode("utf-8")
     else:
@@ -33,7 +34,7 @@ def cache_sticker(emote):
         headers={"Content-Type": "application/json"},
         json={
             "chat_id": settings.STICKER_DUMP,
-            "sticker": (settings.MY_URL + "/emote/{}@2x.webp").format(emote),
+            "sticker": (settings.MY_URL + "/emote/{}-{}@2x.webp").format(emote, flag_str),
             "disable_notification": True,
         }
     )
@@ -41,7 +42,7 @@ def cache_sticker(emote):
         return None
     sticker_id = result.json()["result"]["sticker"]["file_id"]
     if _redis:
-        _redis.set(_redis_key(emote), sticker_id.encode("utf-8"))
+        _redis.hmset(_redis_key(emote), {"s-%s" % flag_str: sticker_id.encode("utf-8"), 'url': emote['image_url']})
     else:
         _cached[emote] = sticker_id
     return sticker_id
@@ -58,7 +59,7 @@ _pending_fetches = {}
 
 
 def _fetch(url):
-    print("fetching %s" % url)
+    print("Fetching %s..." % url)
     result = requests.get(url)
     with open(_spritesheet_path(url), 'bw') as f:
         f.write(result.content)
@@ -66,16 +67,29 @@ def _fetch(url):
 
 def get_spritesheet(url):
     if url in _pending_fetches:
-        print("waiting for ongoing fetch")
         _pending_fetches[url].join()
 
     if os.path.exists(_spritesheet_path(url)):
-        print("using cached spritesheet")
         return open(_spritesheet_path(url), 'rb')
 
-    print("fetching spritesheet")
     _pending_fetches[url] = gevent.spawn(_fetch, url)
     _pending_fetches[url].join()
     del _pending_fetches[url]
 
     return open(_spritesheet_path(url), 'rb')
+
+
+def get_cached_emote(name):
+    return _redis.hgetall(_redis_key(name))
+
+
+def clear_cached_stickers(emote):
+    key = _redis_key(emote)
+    keys = [x for x in _redis.hkeys(key) if x.startswith('s-')]
+    if len(keys) > 0:
+        _redis.hdel(key, *keys)
+
+
+def cache_emote_scale(emote, scale):
+    key = _redis_key(emote)
+    _redis.hmset(key, {'url': emote['image_url'].encode('utf-8'), 'scale': scale})

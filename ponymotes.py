@@ -20,6 +20,7 @@ _init()
 
 
 def fetch_ponymotes():
+    _init()
     result = requests.get("https://ponymotes.net/bpm/_export.json.bz2")
     compressed = result.content
     uncompressed = bz2.decompress(compressed)
@@ -28,9 +29,10 @@ def fetch_ponymotes():
     for name, emote in data.items():
         name = name[1:]
         if 'primary' in emote:
-            _aliases[name] = {'primary': emote['primary'][1:], 'css': emote.get('css', None)}
+            _aliases[name] = {'primary': emote['primary'][1:], 'css': emote.get('css', None), 'name': name}
             continue
-        _aliases[name] = {'primary': name, 'css': emote.get('css', None)}
+        emote['name'] = name
+        _aliases[name] = {'primary': name, 'css': emote.get('css', None), 'name': name}
         _emotes[name] = emote
         for tag in emote['tags']:
             tag = tag[1:]
@@ -116,9 +118,9 @@ def perform_search(text):
         result = set(_emotes.keys()) - excludes
 
     if has_names:
-        return result & names, flags
+        return [emote_by_name(x) for x in result & names], flags
     else:
-        return result, flags
+        return [emote_by_name(x) for x in result], flags
 
 
 def get_size(ponymote):
@@ -137,7 +139,6 @@ def render_ponymote(name, flags, format='png', scale=1):
     if url[:2] == '//':
         url = 'http:' + url
 
-    print("hi")
     f = cache.get_spritesheet(url)
     try:
         img = Image.open(f)
@@ -163,3 +164,11 @@ def render_ponymote(name, flags, format='png', scale=1):
 
     output.seek(0)
     return output.read()
+
+
+def emote_by_name(name):
+    return _emotes[name]
+
+
+def get_base_emotes():
+    return _emotes
