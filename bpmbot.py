@@ -42,7 +42,7 @@ def handle_request(id, query):
                 {
                     "type": "sticker",
                     "id": "bpmbot-" + emote,
-                    "sticker_file_id": sticker_ids[emote],
+                    "sticker_file_id": sticker_ids[emote['name']],
                 } for emote in emotes if sticker_ids.get(emote['name'], None)
             ]
         }
