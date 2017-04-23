@@ -29,12 +29,13 @@ def cache_sticker(emote, flags):
     else:
         if emote in _cached:
             return _cached[emote]
+    scale = min(1, settings.STICKER_MIN_SIZE / max(emote['size']))
     result = requests.post(
         "https://api.telegram.org/bot{}/sendSticker".format(settings.TELEGRAM_TOKEN),
         headers={"Content-Type": "application/json"},
         json={
             "chat_id": settings.STICKER_DUMP,
-            "sticker": (settings.MY_URL + "/emote/{}-{}@2x.webp").format(emote, flag_str),
+            "sticker": (settings.MY_URL + "/emote/{}-{}@{}x.webp").format(emote, flag_str, scale),
             "disable_notification": True,
         }
     )
