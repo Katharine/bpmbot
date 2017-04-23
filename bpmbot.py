@@ -27,7 +27,7 @@ def handle_request(id, query):
         group = gevent.pool.Group()
         greenlets = {}
         for emote in emotes:
-            greenlets[emote] = group.spawn(cache.cache_sticker, emote, flags)
+            greenlets[emote['name']] = group.spawn(cache.cache_sticker, emote, flags)
         group.join()
         sticker_ids = {k: x.get() for k, x in greenlets.items()}
 
