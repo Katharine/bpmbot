@@ -6,7 +6,7 @@ import cache
 import ponymotes
 ponymotes.fetch_ponymotes()
 
-q = gevent.queue.Queue(items=ponymotes.get_base_emotes().items())
+q = gevent.queue.Queue(items=ponymotes.get_base_emotes().values())
 q.put(StopIteration)
 
 total = len(q)
