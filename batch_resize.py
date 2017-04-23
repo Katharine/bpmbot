@@ -30,7 +30,7 @@ for name, emote in emotes.items():
     # cache.clear_cached_stickers(name)
     if emote['size'][0] < settings.STICKER_MIN_SIZE and emote['size'][1] < settings.STICKER_MIN_SIZE:
         todo[name] = int(math.ceil(math.log(settings.STICKER_MIN_SIZE/max(*emote['size']), 2)))
-    if len(todo) > 300:
+    if len(todo) > 10:
         break
 
 print("Got {} emotes to scale, totalling {} operations.".format(len(todo), sum(todo.values())))
