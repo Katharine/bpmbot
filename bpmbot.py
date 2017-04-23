@@ -41,7 +41,7 @@ def handle_request(id, query):
             "results": [
                 {
                     "type": "sticker",
-                    "id": "bpmbot-" + emote,
+                    "id": "bpmbot-" + emote['name'],
                     "sticker_file_id": sticker_ids[emote['name']],
                 } for emote in emotes if sticker_ids.get(emote['name'], None)
             ]
