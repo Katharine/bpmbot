@@ -41,7 +41,7 @@ def handle_request(id, query):
             "results": [
                 {
                     "type": "sticker",
-                    "id": "bpmbot-" + emote['name'],
+                    "id": emote['name'],
                     "sticker_file_id": sticker_ids[emote['name']],
                 } for emote in emotes if sticker_ids.get(emote['name'], None)
             ]
@@ -49,12 +49,18 @@ def handle_request(id, query):
     )
 
 
+def handle_inline_result(emote, user):
+    cache.note_emote_use(emote, user)
+
+
 @app.route('/telegram/update', methods=['POST'])
 def handle_update():
-    if 'inline_query' not in request.json:
-        return 'u wot mate?'
-    query = request.json['inline_query']
-    gevent.spawn(handle_request, query['id'], query['query'])
+    if 'inline_query' in request.json:
+        query = request.json['inline_query']
+        gevent.spawn(handle_request, query['id'], query['query'])
+    elif 'chosen_inline_result' in request.json:
+        result = request.json['chosen_inline_result']
+        handle_inline_result(result['result_id'], result['from'])
     return ''
 
 
@@ -71,7 +77,10 @@ def render_emote(emote, scale, format):
 if __name__ == '__main__':
     requests.post("https://api.telegram.org/bot{}/setWebhook".format(settings.TELEGRAM_TOKEN),
                   headers={"Content-Type": "application/json"},
-                  json={"url": settings.MY_URL + "/telegram/update", "allowed_updates": "inline_query"})
+                  json={
+                      "url": settings.MY_URL + "/telegram/update",
+                      "allowed_updates": ["inline_query", "chosen_inline_result"]
+                  })
     from gevent.wsgi import WSGIServer
     http_server = WSGIServer(('', settings.PORT), app)
     http_server.serve_forever()

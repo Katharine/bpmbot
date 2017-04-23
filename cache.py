@@ -94,3 +94,15 @@ def clear_cached_stickers(emote):
 def cache_emote_scale(emote, scale):
     key = _redis_key(emote)
     _redis.hmset(key, {'url': emote['image_url'].encode('utf-8'), 'scale': scale})
+
+
+def note_emote_use(emote, user=None):
+    key = _redis_key(emote)
+    _redis.hincrby(key, 'uses', 1)
+    if user:
+        note_user_emote(user, emote)
+
+
+def note_user_emote(user, emote):
+    user_key = 'u:{}'.format(user['id'])
+    _redis.hincrby(user_key, 'e:{}'.format(emote), 1)
