@@ -129,7 +129,7 @@ def get_size(ponymote):
 
 
 def render_ponymote(name, flags, format='png', scale=1):
-    if scale > 10 or format not in {'png', 'webp', 'gif', 'jpeg', 'bmp', 'tiff'}:
+    if scale > 32 or format not in {'png', 'webp', 'gif', 'jpeg', 'bmp', 'tiff'}:
         scale = 1
         name = 'no'
         format = 'png'
