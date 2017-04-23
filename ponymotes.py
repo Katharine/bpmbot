@@ -22,7 +22,7 @@ _init()
 def fetch_ponymotes():
     _init()
     result = requests.get("https://ponymotes.net/bpm/_export.json.bz2")
-    compressed = result.content
+    compressed = result.content.decode('utf-8')
     uncompressed = bz2.decompress(compressed)
     data = json.loads(uncompressed)
     assert isinstance(data, dict)
