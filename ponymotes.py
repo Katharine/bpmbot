@@ -31,6 +31,8 @@ def fetch_ponymotes():
     assert isinstance(data, dict)
     for name, emote in data.items():
         name = name[1:]
+        if not emote.get('size'):
+            continue
         if 'primary' in emote:
             _reverse_aliases.setdefault(emote['primary'][1:], []).append(name)
             _aliases[name] = {'primary': emote['primary'][1:], 'css': emote.get('css', None), 'name': name}
