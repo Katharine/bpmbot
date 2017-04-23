@@ -5,6 +5,7 @@ import json
 import requests
 
 import cache
+import settings
 
 from PIL import Image
 
@@ -128,7 +129,7 @@ def get_size(ponymote):
 
 
 def render_ponymote(name, flags, format='png', scale=1):
-    if scale > 5 or format not in {'png', 'webp', 'gif', 'jpeg', 'bmp', 'tiff'}:
+    if scale > 10 or format not in {'png', 'webp', 'gif', 'jpeg', 'bmp', 'tiff'}:
         scale = 1
         name = 'no'
         format = 'png'
@@ -136,14 +137,29 @@ def render_ponymote(name, flags, format='png', scale=1):
     emote = _emotes[_aliases[name]['primary']]
     css = _aliases[name]['css'] or {}
     url = emote['image_url']
+    is_cropped = False
     if url[:2] == '//':
         url = 'http:' + url
 
+    if scale > 1:
+        cached = cache.get_cached_emote(name)
+        cached_scale = int(cached.get(b'scale', b'1'))
+        if cached_scale > 1 and emote['image_url'] == cached.get(b'url', b'').decode('utf-8'):
+            use_scale = 1
+            while use_scale < cached_scale and use_scale < scale:
+                use_scale *= 2
+            # We want to scale down, not up, but only from at most one size above what we wanted.
+            if use_scale < cached_scale and use_scale < scale:
+                use_scale *= 2
+            if use_scale > 1:
+                url = 'https://s3.amazonaws.com/{}/{}@{}x.png'.format(settings.SCALED_PONYMOTE_BUCKET, name, use_scale)
+                scale /= use_scale
+                is_cropped = True
     f = cache.get_spritesheet(url)
     try:
         img = Image.open(f)
 
-        if 'size' in emote:
+        if 'size' in emote and not is_cropped:
             offset = [-x for x in emote.get('offset', (0, 0))]
             img = img.crop((offset[0], offset[1], offset[0] + emote['size'][0], offset[1] + emote['size'][1]))
 

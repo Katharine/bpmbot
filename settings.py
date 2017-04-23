@@ -8,4 +8,4 @@ REDIS_URL = _environ.get("REDIS_URL", None)
 STICKER_DUMP = int(_environ.get("STICKER_DUMP", 0))
 STICKER_LIMIT = int(_environ.get("STICKER_LIMIT", 5))
 STICKER_MIN_SIZE = 256
-
+SCALED_PONYMOTE_BUCKET = "bpm-scaled"
