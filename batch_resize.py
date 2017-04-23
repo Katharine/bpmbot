@@ -24,10 +24,10 @@ for name, emote in emotes.items():
     if 'image_url' not in emote:
         continue
     cached = None
-    # cached = cache.get_cached_emote(name)
+    cached = cache.get_cached_emote(name)
     if cached is not None and cached.get('url', None) == emote['image_url']:
         continue
-    # cache.clear_cached_stickers(name)
+    cache.clear_cached_stickers(name)
     if emote['size'][0] < settings.STICKER_MIN_SIZE and emote['size'][1] < settings.STICKER_MIN_SIZE:
         todo[name] = int(math.ceil(math.log(settings.STICKER_MIN_SIZE/max(*emote['size']), 2)))
     if len(todo) > 10:
@@ -70,7 +70,9 @@ while max(todo.values()) > 0:
             continue
         todo[emote] -= 1
         new_path = os.path.join(tmp_dir, os.path.basename(emote_paths[emote]))
-        s3.upload_file(new_path, "bpm-scaled", "{}@{}x.png".format(emote, 2**iteration))
+        s3.upload_file(new_path, "bpm-scaled", "{}@{}x.png".format(emote, 2**iteration), ExtraArgs={
+            'ACL': 'public-read', 'ContentType': 'image/png'
+        })
         cache.cache_emote_scale(ponymotes.emote_by_name(emote), 2**iteration)
         os.unlink(emote_paths[emote])
         if todo[emote] > 0:
