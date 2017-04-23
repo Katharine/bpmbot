@@ -141,7 +141,7 @@ def render_ponymote(name, flags, format='png', scale=1):
     if url[:2] == '//':
         url = 'http:' + url
 
-    if scale > 1:
+    if scale > 1 and 'nowaifu' not in flags:
         cached = cache.get_cached_emote(name)
         cached_scale = int(cached.get(b'scale', b'1'))
         if cached_scale > 1 and emote['image_url'] == cached.get(b'url', b'').decode('utf-8'):
