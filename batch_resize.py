@@ -37,7 +37,7 @@ def process_emote(name, emote):
 print("Determining emotes to scale...")
 todo = {}
 
-pool = Pool(20)
+pool = Pool(settings.PARALLEL_CACHE_CHECKS)
 for name, emote in emotes.items():
     pool.spawn(process_emote, name, emote)
 pool.join()
@@ -58,7 +58,7 @@ for i, emote in enumerate(todo.keys()):
 
 print("Finished fetching originals.")
 
-pool = Pool(30)
+pool = Pool(settings.PARALLEL_S3_UPLOADS)
 while len(todo) > 0:
     print("----------")
     print("BEGIN ITERATION {}".format(iteration))
