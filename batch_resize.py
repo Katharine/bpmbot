@@ -76,7 +76,7 @@ while len(todo) > 0:
     print("Uploading scaled emotes and cleaning up...")
     this_round_len = len(todo)
 
-    def upload_emote(emote):
+    def upload_emote(iteration, emote):
         if todo[emote] <= 0:
             return
         todo[emote] -= 1
@@ -93,7 +93,7 @@ while len(todo) > 0:
             del todo[emote]
 
     for i, emote in enumerate(list(todo.keys())):
-        pool.spawn(emote)
+        pool.spawn(upload_emote, iteration, emote)
         if i % 100 == 0:
             print("Done {} of {}.".format(i, this_round_len))
     pool.join()
