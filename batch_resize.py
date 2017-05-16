@@ -1,4 +1,5 @@
 from gevent import monkey; monkey.patch_all()
+from gevent.pool import Pool
 import math
 import os
 import subprocess
@@ -18,18 +19,28 @@ ponymotes.fetch_ponymotes()
 
 emotes = ponymotes.get_base_emotes()
 
-print("Determining emotes to scale...")
-todo = {}
-for name, emote in emotes.items():
+def process_emote(name, emote):
     if 'image_url' not in emote:
-        continue
-    cached = None
+        return
     cached = cache.get_cached_emote(name)
-    if cached is not None and cached.get('url', None) == emote['image_url']:
-        continue
+    if (cached is not None and cached.get(b'url', b'').decode('utf-8') == emote['image_url'] and
+            cached.get(b'scale', None) is not None):
+        return
+    print("To process: {}".format(name))
     cache.clear_cached_stickers(name)
     if emote['size'][0] < settings.STICKER_MIN_SIZE and emote['size'][1] < settings.STICKER_MIN_SIZE:
         todo[name] = int(math.ceil(math.log(settings.STICKER_MIN_SIZE/max(*emote['size']), 2)))
+    elif cached is not None:
+        print("{} doesn't need resizing, but had no scale; fixing...".format(name))
+        cache.cache_emote_scale(ponymotes.emote_by_name(name), 1)
+
+print("Determining emotes to scale...")
+todo = {}
+
+pool = Pool(20)
+for name, emote in emotes.items():
+    pool.spawn(process_emote, name, emote)
+pool.join()
 
 print("Got {} emotes to scale, totalling {} operations.".format(len(todo), sum(todo.values())))
 
@@ -47,6 +58,7 @@ for i, emote in enumerate(todo.keys()):
 
 print("Finished fetching originals.")
 
+pool = Pool(30)
 while len(todo) > 0:
     print("----------")
     print("BEGIN ITERATION {}".format(iteration))
@@ -63,9 +75,10 @@ while len(todo) > 0:
     print("waifu2x completed.")
     print("Uploading scaled emotes and cleaning up...")
     this_round_len = len(todo)
-    for i, emote in enumerate(list(todo.keys())):
+
+    def upload_emote(emote):
         if todo[emote] <= 0:
-            continue
+            return
         todo[emote] -= 1
         new_path = os.path.join(tmp_dir, os.path.basename(emote_paths[emote]))
         s3.upload_file(new_path, "bpm-scaled", "{}@{}x.png".format(emote, 2**iteration), ExtraArgs={
@@ -78,8 +91,12 @@ while len(todo) > 0:
         else:
             del emote_paths[emote]
             del todo[emote]
+
+    for i, emote in enumerate(list(todo.keys())):
+        pool.spawn(emote)
         if i % 100 == 0:
             print("Done {} of {}.".format(i, this_round_len))
+    pool.join()
     print("Finished iteration {}.".format(iteration))
     iteration += 1
 

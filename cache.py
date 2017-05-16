@@ -86,7 +86,7 @@ def get_cached_emote(name):
 
 def clear_cached_stickers(emote):
     key = _redis_key(emote)
-    keys = [x for x in _redis.hkeys(key) if x.startswith('s-')]
+    keys = [x for x in _redis.hkeys(key) if x.startswith(b's-')]
     if len(keys) > 0:
         _redis.hdel(key, *keys)
 
