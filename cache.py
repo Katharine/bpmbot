@@ -21,6 +21,8 @@ def _redis_key(emote):
 
 
 def cache_sticker(emote, flags):
+    valid_flags = {'nowaifu', 'r', 'f'}
+    flags = valid_flags.intersection(flags)
     flag_str = '-'.join(sorted(flags))
     if _redis:
         cached_result = _redis.hget(_redis_key(emote), "s-%s" % flag_str)
