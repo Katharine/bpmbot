@@ -150,6 +150,7 @@ def render_ponymote(name, flags, format='png', scale=1):
     if url[:2] == '//':
         url = 'http:' + url
 
+    total_scale = scale
     if scale > 1 and 'nowaifu' not in flags:
         cached = cache.get_cached_emote(name)
         cached_scale = int(cached.get(b'scale', b'1'))
@@ -190,6 +191,7 @@ def render_ponymote(name, flags, format='png', scale=1):
             if not blur:
                 blur = 2
             blur = int(blur)
+            blur = int(blur * total_scale)
             new_img = Image.new(img.mode, (img.width + blur * 3, img.height + blur * 3))
             new_img.paste(img, (blur, blur))
             img = new_img.filter(ImageFilter.GaussianBlur(blur))
