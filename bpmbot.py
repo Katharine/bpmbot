@@ -2,6 +2,7 @@ from gevent import monkey; monkey.patch_all()
 import gevent
 import gevent.pool
 from flask import Flask, request, make_response
+import re
 import requests
 
 import cache
@@ -12,6 +13,20 @@ app = Flask(__name__)
 
 ponymotes.fetch_ponymotes()
 
+def filter_flags(flags):
+    new_flags = []
+    for flag in flags:
+        if flag in {'nowaifu', 'r', 'f'}:
+            new_flags.append(flag)
+            continue
+        if flag.isdigit():
+            new_flags.append(flag)
+            continue
+        if re.fullmatch(r'blur\d?', flag):
+            new_flags.append(flag)
+            continue
+    return new_flags
+
 
 def handle_request(id, query):
     sticker_ids = {}
@@ -20,6 +35,7 @@ def handle_request(id, query):
     else:
         print(query)
         emotes, flags = ponymotes.perform_search(query)
+        flags = filter_flags(flags)
         print(emotes, flags)
         emotes = emotes[:settings.STICKER_LIMIT]
         # Don't use flags with more than
@@ -44,7 +60,7 @@ def handle_request(id, query):
             "results": [
                 {
                     "type": "sticker",
-                    "id": emote['name'],
+                    "id": emote['name'] + '-' + '-'.join(sorted(flags)),
                     "sticker_file_id": sticker_ids[emote['name']],
                 } for emote in emotes if sticker_ids.get(emote['name'], None)
             ]
