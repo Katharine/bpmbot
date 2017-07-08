@@ -178,6 +178,10 @@ def render_ponymote(name, flags, format='png', scale=1):
         if 'scaleY(-1)' in transform or 'f' in flags:
             img = img.transpose(Image.FLIP_TOP_BOTTOM)
 
+        numbers = [int(x) for x in flags if x.isdigit()][:1]
+        if numbers:
+            img = img.rotate(-numbers[0], resample=Image.BICUBIC, expand=True)
+
         if scale != 1:
             img = img.resize((int(img.size[0] * scale), int(img.size[1] * scale)), resample=Image.LANCZOS)
 

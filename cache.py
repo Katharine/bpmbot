@@ -21,7 +21,7 @@ def _redis_key(emote):
 
 
 def cache_sticker(emote, flags):
-    valid_flags = {'nowaifu', 'r', 'f'}
+    valid_flags = {'nowaifu', 'r', 'f', '45', '90', '135', '180', '225', '270', '315'}
     flags = valid_flags.intersection(flags)
     flag_str = '-'.join(sorted(flags))
     if _redis:
