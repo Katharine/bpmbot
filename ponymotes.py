@@ -3,12 +3,13 @@ import bz2
 import io
 import json
 import Levenshtein
+import re
 import requests
 
 import cache
 import settings
 
-from PIL import Image
+from PIL import Image, ImageFilter
 
 
 def _init():
@@ -181,6 +182,17 @@ def render_ponymote(name, flags, format='png', scale=1):
         numbers = [int(x) for x in flags if x.isdigit()][:1]
         if numbers:
             img = img.rotate(-numbers[0], resample=Image.BICUBIC, expand=True)
+
+        blur = [x for x in flags if re.match(r'^blur(\d+)?$', x)]
+        if blur:
+            blur = blur[-1]
+            blur = re.match(r'blur(\d+)?', blur).group(1)
+            if not blur:
+                blur = 2
+            blur = int(blur)
+            new_img = Image.new(img.mode, (img.width + blur * 3, img.height + blur * 3))
+            new_img.paste(img, (blur, blur))
+            img = new_img.filter(ImageFilter.GaussianBlur(blur))
 
         if scale != 1:
             img = img.resize((int(img.size[0] * scale), int(img.size[1] * scale)), resample=Image.LANCZOS)
