@@ -84,8 +84,10 @@ def handle_update():
 
 
 @app.route('/emote/<emote>.<format>', defaults={'scale': 1}, methods=['GET'])
+@app.route('/emote/<_>/<emote>.<format>', defaults={'scale': 1}, methods=['GET'])
 @app.route('/emote/<emote>@<scale>x.<format>', methods=['GET'])
-def render_emote(emote, scale, format):
+@app.route('/emote/<_>/<emote>@<scale>x.<format>', methods=['GET'])
+def render_emote(emote, scale, format, _=None):
     parts = emote.split('-')
 
     response = make_response(ponymotes.render_ponymote(parts[0], parts[1:], format=format, scale=float(scale)))

@@ -36,7 +36,7 @@ def cache_sticker(emote, flags):
         headers={"Content-Type": "application/json"},
         json={
             "chat_id": settings.STICKER_DUMP,
-            "sticker": (settings.MY_URL + "/emote/{}-{}@{}x.webp?now={}").format(emote['name'], flag_str, scale, time.time()),
+            "sticker": (settings.MY_URL + "/emote/{}/{}-{}@{}x.webp").format(time.time(), emote['name'], flag_str, scale),
             "disable_notification": True,
         }
     )
