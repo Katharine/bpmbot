@@ -23,7 +23,7 @@ def process_emote(name, emote):
     if 'image_url' not in emote:
         return
     cached = cache.get_cached_emote(name)
-    if (cached is not None and cached.get(b'url', b'').decode('utf-8') == emote['image_url'] and
+    if (cached is not None and #cached.get(b'url', b'').decode('utf-8') == emote['image_url'] and
             cached.get(b'scale', None) is not None):
         return
     print("To process: {}".format(name))
