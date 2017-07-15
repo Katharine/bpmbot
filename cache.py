@@ -3,7 +3,6 @@ import tempfile
 import time
 
 import gevent
-import re
 import redis
 import requests
 
@@ -22,23 +21,7 @@ def _redis_key(emote):
     return "m:{}".format(emote if isinstance(emote, str) else emote['name'])
 
 
-def filter_flags(flags):
-    new_flags = []
-    for flag in flags:
-        if flag in {'nowaifu', 'r', 'f'}:
-            new_flags.append(flag)
-            continue
-        if flag.isdigit():
-            new_flags.append(flag)
-            continue
-        if re.fullmatch(r'blur\d?', flag):
-            new_flags.append(flag)
-            continue
-    return new_flags
-
-
 def cache_sticker(emote, flags):
-    flags = filter_flags(flags)
     flag_str = '-'.join(sorted(flags))
     if _redis:
         cached_result = _redis.hget(_redis_key(emote), "s-%s" % flag_str)
