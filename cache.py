@@ -1,5 +1,6 @@
 import os
 import tempfile
+import time
 
 import gevent
 import re
@@ -52,7 +53,7 @@ def cache_sticker(emote, flags):
         headers={"Content-Type": "application/json"},
         json={
             "chat_id": settings.STICKER_DUMP,
-            "sticker": (settings.MY_URL + "/emote/{}-{}@{}x.webp").format(emote['name'], flag_str, scale),
+            "sticker": (settings.MY_URL + "/emote/{}-{}@{}x.webp?now={}").format(emote['name'], flag_str, scale, time.time()),
             "disable_notification": True,
         }
     )
